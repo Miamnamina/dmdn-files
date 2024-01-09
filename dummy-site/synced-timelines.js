@@ -1,4 +1,10 @@
+/**
+ * TODO: Implement methods for fetching dataset values with a default return value in case the data attribute does not exist
+ */
 
+/**
+ * Define selectors for simple configuration
+ */
 const _timelineIdAttr = 'data-timeline-id';
 const _timelineSyncedWithAttr = 'data-timeline-synced-with';
 const _trackSelector = '.w-dyn-list > div'
@@ -85,7 +91,6 @@ $syncedTimelines.forEach(function($timeline) {
        * FIX: for some reason this does not work on right-most handful of pixels
        *      probably due to some clamping issues or padding/margin/offset inaccuracies
        */
-      console.log($syncedTimeline, $timeline)
       if ($syncedTimeline.dataset.timelineId !== $timeline.dataset.timelineId) {
         $syncedTrack.scrollTo({ left: scrollTo })
       }
