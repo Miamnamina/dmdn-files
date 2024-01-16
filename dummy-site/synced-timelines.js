@@ -108,16 +108,6 @@ $timelines.forEach(function($timeline) {
   };
 
   const timeline = new vis.Timeline($container, data, options);
-  /*  $events.forEach(function($event) {
-      if ($event.dataset.startdate !== undefined) {
-        $event.dataset.startdateUnix = dateToUnixTimestamp(new Date($event.dataset.startdate))
-      }
-      if ($event.dataset.enddate !== undefined) {
-        $event.dataset.enddateUnix = dateToUnixTimestamp(new Date($event.dataset.enddate))
-      }
-    }) */
-
-  //sortEvents($events);
 })
 
 /**
@@ -190,70 +180,3 @@ $syncedTimelines.forEach(function($timeline) {
     })
   });
 })
-
-/**
- * Functions section
- */
-function sortEvents($events) {
-  sortEventsIntoTracks($events)
-}
-
-function dateToUnixTimestamp(date) {
-  return Math.floor(date / 1000)
-}
-
-/**
-  * Custom "sort" function to determine whether events start before or after oneanother
-  */
-function compareEvents(starttimeUnixA, starttimeUnixB) {
-  if (starttimeUnixA < starttimeUnixB) {
-    return -1; // Event A starts before event B
-  } else if (starttimeUnixA > starttimeUnixB) {
-    return 1; // Event A starts after event B
-  } else {
-    return 0; // Events start at the same time
-  }
-}
-
-/**
-  * Figure out whether events overlap or not
-  */
-function doEventsOverlap($eventA, $eventB) {
-  return (
-    $eventA.dataset.starttimeUnix < $eventB.dataset.endtimeUnix && // Event A starts before event B ends
-    $eventA.dataset.endtimeUnix > $eventB.dataset.starttimeUnix   // event A ends after event B starts
-  );
-}
-
-function sortEventsIntoTracks($events) {
-  const $lanes = [];
-
-  // Iterate through each event in the input array
-  for (let i = 0; i < $events.length; i++) {
-    let $currentEvent = $events[i];
-    let $nextEvent = $events[i + 1];
-
-    // if current event overlaps with the next one, put the next one on a new track
-    // if it then overlaps with the last element of that lane, put it on yet another track
-    // if the current element is on a lane other than 0 try to put the element into the previous lane (e.g. element on lane 1 overlaps with next one, so maybe put the next element back to lane 0)
-    // That way we only need to look at 3 elements at a time, the current, the next and the last one from the other lanes
-
-    if (i === 0) {
-      $currentEvent.dataset.lane = 0;
-
-      $lanes[0] = [];
-      $lanes[0].push($currentEvent);
-    }
-
-    if ($nextEvent !== undefined && doEventsOverlap($currentEvent, $nextEvent)) {
-      $nextEvent.dataset.lane = 1;
-
-      if ($lanes[1] === undefined) $lanes[1] = []
-      $lanes[1].push($nextEvent)
-    } else {
-      $nextEvent.dataset.lane = 0;
-
-      $lanes[0].push($nextEvent)
-    }
-  }
-}
