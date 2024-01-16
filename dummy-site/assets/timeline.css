@@ -27,7 +27,7 @@
   height: 100%;
   position: absolute;
   background-color: rgba(149, 171, 199, 1);
-  left: 20%;
+  left: calc(50% - 10px / 2);
 }
 
 .timeline-viewport .vis-item {
