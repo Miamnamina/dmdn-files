@@ -30,6 +30,7 @@ Number.prototype.clamp = function(min, max) {
   */
 const $timelines = document.querySelectorAll(`[${_timelineIdAttr}]`);
 const $syncedTimelines = document.querySelectorAll(`[${_timelineIdAttr}]:not([${_timelineSyncedWithAttr}=""])`);
+const visTimelines = []
 
 /**
  * Figure out whether events overlap and put them into different lanes.
@@ -39,13 +40,10 @@ const $syncedTimelines = document.querySelectorAll(`[${_timelineIdAttr}]:not([${
 $timelines.forEach(function($timeline) {
   // TODO: create a function for this
   const $events = $timeline.querySelectorAll(_eventSelector)
-  $($events).wrapAll('<div class="timeline-lane"></div>')
-
   $($timeline).append('<div class="vis-timeline"></div>')
 
   const $container = $timeline.querySelector('.vis-timeline')
 
-  console.log($events)
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -61,7 +59,8 @@ $timelines.forEach(function($timeline) {
         id: idx,
         start: $event.dataset.startdate,
         end: $event.dataset.enddate,
-        content: $event
+        content: $event,
+        active: false
       }
 
       let eventStartdate = new Date($event.dataset.startdate)
@@ -91,23 +90,61 @@ $timelines.forEach(function($timeline) {
       scale: 'year',
       step: 1
     },
-    min: minimumDate,
-    max: maximumDate,
+    //min: minimumDate,
+    //max: maximumDate,
     showCurrentTime: false,
     template: function(item, element, data) {
-      console.log(data)
-
       const $dateLine = data.content.querySelector('.event-line.time');
 
       if ($dateLine !== null) {
         $dateLine.innerText = data.start.toLocaleDateString() + ' - ' + data.end?.toLocaleDateString()
       }
 
+      if (data.active === true) {
+        data.content.className = 'timeline-event active'
+      } else {
+        data.content.className = 'timeline-event'
+      }
       return data.content
-    }
-  };
+    },
+  }
 
   const timeline = new vis.Timeline($container, data, options);
+  //console.log(timeline)
+
+  const $background = $timeline.querySelector('.vis-panel.vis-background')
+  $($background).append('<div class="marker"></div>')
+  const $marker = $timeline.querySelector('.marker')
+  const markerXleft = $marker.getBoundingClientRect().left
+  const markerXright = $marker.getBoundingClientRect().right
+
+  /**
+   * Make sure to add/remove the 'active' class on the overflow container when it touches the $marker
+   */
+  function handleActiveStates(event) {
+    const $overflowItems = $timeline.querySelectorAll('.vis-item-overflow')
+
+    $overflowItems.forEach(function($item) {
+      const itemRect = $item.getBoundingClientRect()
+
+      if (itemRect.left < markerXright && itemRect.right > markerXleft) {
+        $($item).addClass('active')
+      } else {
+        $($item).removeClass('active')
+      }
+    })
+  }
+
+  /**
+   * Bind eventlisteners for items active state
+   */
+  timeline.on('changed', handleActiveStates)
+
+  /**
+   * Hide original track with JS, so it looks nice even if JS is disabled
+   */
+  const $track = $timeline.querySelector(_trackSelector)
+  $track.style.display = 'none'; // hide original track
 })
 
 /**
@@ -132,19 +169,12 @@ $syncedTimelines.forEach(function($timeline) {
 
   /**
    * selectors for all timeilnes this one is synced with
-   *
-   * TODO: maybe create a function to handle this conversion and clean up a little here?
    */
-  const syncedWidth = $timeline.dataset.timelineSyncedWith
-    .split(',') // split the comma-separated list into an array (TODO: this might not be necessary if we use group ids to sync multiple timelines)
-    .map(function(timelineId) { // create valid selectors from the ids
-      return `[${_timelineIdAttr}="${timelineId}"]`
-    })
-    .join(',') // create a valid CSS selector string from the selectors array
+  const syncedWidthSelectors = convertSyncedWithToSelectors($timeline.dataset.timelineSyncedWith)
   /**
-   * Get all synced timelines from the DOM to run scrollTo() on them
-   */
-  const $syncedWith = document.querySelectorAll(syncedWidth)
+* Get all synced timelines from the DOM to run scrollTo() on them
+*/
+  const $syncedWith = document.querySelectorAll(syncedWidthSelectors)
 
   /**
     * Add the actual EventListeners to the track elements
@@ -180,3 +210,15 @@ $syncedTimelines.forEach(function($timeline) {
     })
   });
 })
+
+/**
+ * Functions section
+ */
+function convertSyncedWithToSelectors(syncedWith) {
+  return syncedWith
+    .split(',') // split the comma-separated list into an array (TODO: this might not be necessary if we use group ids to sync multiple timelines)
+    .map(function(timelineId) { // create valid selectors from the ids
+      return `[${_timelineIdAttr}="${timelineId}"]`
+    })
+    .join(',') // create a valid CSS selector string from the selectors array
+}
