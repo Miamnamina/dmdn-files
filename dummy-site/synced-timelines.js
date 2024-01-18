@@ -11,15 +11,31 @@ const _trackSelector = '.timeline-track';
 const _eventSelector = '.timeline-event';
 const _eventStartDateAttr = 'data-startdate';
 const _eventEndDateAttr = 'data-enddate';
+const _visTimelineClass = 'vis-timeline';
+const _visTimelineSelector = '.' + _visTimelineClass;
+const $visTimelineContainerMarkup = `<div class="${_visTimelineClass}"></div>`;
+const _eventLineTimeSelector = '.event-line.time';
+const _visOverflowSelector = '.vis-item-overflow';
+const _visBackgroundSelector = '.vis-panel.vis-background';
+const _markerClass = 'marker'
+const _markerSelector = '.' + _markerClass;
+const $markerMarkup = `<div class="${_markerClass}"></div>`;
+const _activeClass = 'active';
+const _timelineViewportSelector = '.timeline-viewport';
 
 /**
   * Set minimum value of a Number
+  *
+  * @prop {number} min
   */
 Number.prototype.min = function(min) {
   return (this < min) ? min : this.valueOf()
 }
 /**
-  * Set minimum and maximum values of a Number
+  * Set minimum and maximum values of a number
+  *
+  * @prop {number} min
+  * @prop {number} max
   */
 Number.prototype.clamp = function(min, max) {
   return Math.min(Math.max(this, min), max)
@@ -29,37 +45,56 @@ Number.prototype.clamp = function(min, max) {
   * Get all timelines that are not synced to nothing, i.e. synced timelines
   */
 const $timelines = document.querySelectorAll(`[${_timelineIdAttr}]`);
-const $syncedTimelines = document.querySelectorAll(`[${_timelineIdAttr}]:not([${_timelineSyncedWithAttr}=""])`);
+/**
+  * This will hold all the vis-timeline instances so we can address each of them
+  * when we want to scroll the synced timelines.
+  */
 const visTimelines = {}
 
 /**
- * Figure out whether events overlap and put them into different lanes.
+ * Prepare data from $event DOM node for vis-timeline
  *
- * This always prepares a first lane and adds other lanes on demand.
+ * @prop {object} $event - .timeline-event node
+ * @prop {number} idx - array index
+ * @return {object}
+ */
+function prepareVisDataItem($event, idx) {
+  const { startdate, enddate } = $event.dataset
+
+  const data = {
+    id: idx,
+    start: startdate,
+    content: $event,
+    active: false
+  }
+
+  if (enddate !== undefined) {
+    data.end = enddate
+  }
+
+  return data
+}
+
+/**
+ * Prepare data for vis-timeline as vis.DataSet
+ *
+ * @props {NodeList} $events - list of .timeline-event nodes
+ * @return {vis.DataSet}
+ */
+function getVisDataFromEvents($events) {
+  return new vis.DataSet(Array.from($events).map(prepareVisDataItem))
+}
+
+/**
+ * Prepare data and initialize the vis-timeline instances
  */
 $timelines.forEach(function($timeline) {
-  // TODO: create a function for this
   const $events = $timeline.querySelectorAll(_eventSelector)
-  $($timeline).append('<div class="vis-timeline"></div>')
+  $($timeline).append($visTimelineContainerMarkup)
 
-  const $container = $timeline.querySelector('.vis-timeline')
+  const $container = $timeline.querySelector(_visTimelineSelector)
 
-  const data = new vis.DataSet([
-    ...Array.from($events).map(function($event, idx) {
-      const data = {
-        id: idx,
-        start: $event.dataset.startdate,
-        end: null,
-        content: $event,
-        active: false
-      }
-      if ($event.dataset.enddate !== undefined) {
-        data.end = $event.dataset.enddate
-      }
-
-      return data
-    }),
-  ])
+  const data = getVisDataFromEvents($events)
 
   const options = {
     zoomable: false,
@@ -78,7 +113,7 @@ $timelines.forEach(function($timeline) {
     zoomMin: 315360000000000 / 1000 / 2, // 5 years
     showCurrentTime: false,
     template: function(item, element, data) {
-      const $dateLine = data.content.querySelector('.event-line.time');
+      const $dateLine = data.content.querySelector(_eventLineTimeSelector);
 
       if ($dateLine !== null) {
         $dateLine.innerText = data.start.toLocaleDateString() + ' - ' + data.end?.toLocaleDateString()
@@ -92,9 +127,9 @@ $timelines.forEach(function($timeline) {
   visTimelines[$timeline.dataset.timelineId] = timeline
   //console.log(timeline)
 
-  const $background = $timeline.querySelector('.vis-panel.vis-background')
-  $($background).append('<div class="marker"></div>')
-  const $marker = $timeline.querySelector('.marker')
+  const $background = $timeline.querySelector(_visBackgroundSelector)
+  $($background).append($markerMarkup)
+  const $marker = $timeline.querySelector(_markerSelector)
   const markerXleft = $marker.getBoundingClientRect().left
   const markerXright = $marker.getBoundingClientRect().right
 
@@ -102,15 +137,15 @@ $timelines.forEach(function($timeline) {
    * Make sure to add/remove the 'active' class on the overflow container when it touches the $marker
    */
   function handleActiveStates(event) {
-    const $overflowItems = $timeline.querySelectorAll('.vis-item-overflow')
+    const $overflowItems = $timeline.querySelectorAll(_visOverflowSelector)
 
     $overflowItems.forEach(function($item) {
       const itemRect = $item.getBoundingClientRect()
 
       if (itemRect.left < markerXright && itemRect.right > markerXleft) {
-        $($item).addClass('active')
+        $($item).addClass(_activeClass)
       } else {
-        $($item).removeClass('active')
+        $($item).removeClass(_activeClass)
       }
     })
   }
@@ -130,12 +165,21 @@ $timelines.forEach(function($timeline) {
      * The idea of this pattern was to return a new handler for each timeline that does not run the
      * `timeline.setWindow()` method on the timeline that is currently being actively scrolled.
      */
-    const $eventTarget = event.event?.target !== undefined ? event.event.target.closest('.timeline-viewport') : undefined
+    const $eventTarget = event.event?.target !== undefined ? event.event.target.closest(_timelineViewportSelector) : undefined
     const targetTimelineIds = $timeline.dataset.timelineSyncedWith.split(',')
 
     targetTimelineIds.forEach(function(targetTimelineId) {
       if ($eventTarget !== undefined && targetTimelineId !== $eventTarget.dataset.timelineId) {
-        visTimelines[targetTimelineId].setWindow(event.start, event.end, { animation: { duration: 200, easingFunction: 'easeInOutQuad' } })
+        const start = event.start.getTime()
+        const end = event.end.getTime()
+        const median = Math.round((start + end) / 2)
+
+        visTimelines[targetTimelineIds].moveTo(median, {
+          animation: {
+            duration: 200,
+            easingFunction: 'easeInOutQuad'
+          }
+        })
       }
     })
   }
