@@ -1,28 +1,20 @@
-.timeline-viewport {
-  background-color: rgba(209, 218, 235, 1);
-  overflow-x: scroll;
-  overflow-y: hidden;
-}
-
-.timeline-event {
-  border-radius: 8px;
+[data-event-id] {
   background-color: rgba(235, 238, 243, 1);
-  border: 1px rgba(171, 186, 217, 1);
-  padding: 12px 16px;
   width: 100%;
-  white-space: wrap;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
-.vis-item-overflow.active .timeline-event {
-  background-color: rgba(249, 249, 249, 1);
+.vis-item-overflow.active [data-event-id] {
+  background-color: var(--color--canvas);
 }
 
-.timeline-viewport .vis-item .vis-item-content {
+[data-timeline-id] .vis-item .vis-item-content {
   width: 100%;
   padding: 8px;
 }
 
-.timeline-viewport .marker {
+[data-timeline-id] .marker {
   display: block;
   width: 10px;
   height: 100%;
@@ -31,14 +23,14 @@
   left: calc(50% - 10px / 2);
 }
 
-.timeline-viewport .vis-item {
+[data-timeline-id] .vis-item {
   border-color: initial;
   background-color: initial;
   border-width: 0;
   color: initial;
 }
 
-.timeline-viewport .vis-content {
+[data-timeline-id] .vis-content {
   padding: 0;
 }
 
@@ -46,8 +38,6 @@
   border-color: transparent;
 }
 
-.event-title {
-  font-weight: 700;
-  font-size: 16px;
-  line-height: 24px;
+.vis-timeline {
+  border: none !important;
 }

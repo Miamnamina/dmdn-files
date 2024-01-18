@@ -1,27 +1,22 @@
 /**
- * TODO: Implement methods for fetching dataset values with a default return value in case the data attribute does not exist
- */
-
-/**
  * Define selectors for simple configuration
  */
 const _timelineIdAttr = 'data-timeline-id';
 const _timelineSyncedWithAttr = 'data-timeline-synced-with';
-const _trackSelector = '.timeline-track';
-const _eventSelector = '.timeline-event';
+const _trackSelector = '[data-timeline-track]';
+const _eventSelector = '[data-event-id]';
 const _eventStartDateAttr = 'data-startdate';
 const _eventEndDateAttr = 'data-enddate';
 const _visTimelineClass = 'vis-timeline';
 const _visTimelineSelector = '.' + _visTimelineClass;
 const $visTimelineContainerMarkup = `<div class="${_visTimelineClass}"></div>`;
-const _eventLineTimeSelector = '.event-line.time';
 const _visOverflowSelector = '.vis-item-overflow';
 const _visBackgroundSelector = '.vis-panel.vis-background';
 const _markerClass = 'marker'
 const _markerSelector = '.' + _markerClass;
 const $markerMarkup = `<div class="${_markerClass}"></div>`;
 const _activeClass = 'active';
-const _timelineViewportSelector = '.timeline-viewport';
+const _timelineViewportSelector = `[${_timelineIdAttr}]`;
 
 /**
   * Set minimum value of a Number
@@ -97,7 +92,6 @@ $timelines.forEach(function($timeline) {
   const data = getVisDataFromEvents($events)
 
   const options = {
-    zoomable: false,
     horizontalScroll: true,
     locale: 'de',
     selectable: false,
@@ -106,21 +100,12 @@ $timelines.forEach(function($timeline) {
     showTooltips: false,
     stack: true,
     stackSubgroups: true,
-    timeAxis: {
-      scale: 'year',
-      step: 1
-    },
-    zoomMin: 315360000000000 / 1000 / 2, // 5 years
+    zoomable: false,
+    zoomKey: 'ctrlKey',
+    zoomMin: 315360000000000 / 1000 / 5, // 2 years
+    zoomMax: 315360000000000 / 1000 / 5, // 2 years
     showCurrentTime: false,
-    template: function(item, element, data) {
-      const $dateLine = data.content.querySelector(_eventLineTimeSelector);
-
-      if ($dateLine !== null) {
-        $dateLine.innerText = data.start.toLocaleDateString() + ' - ' + data.end?.toLocaleDateString()
-      }
-
-      return data.content
-    },
+    align: 'left',
   }
 
   const timeline = new vis.Timeline($container, data, options);
