@@ -46,13 +46,18 @@ $timelines.forEach(function($timeline) {
 
   const data = new vis.DataSet([
     ...Array.from($events).map(function($event, idx) {
-      return {
+      const data = {
         id: idx,
         start: $event.dataset.startdate,
-        end: $event.dataset.enddate,
+        end: null,
         content: $event,
         active: false
       }
+      if ($event.dataset.enddate !== undefined) {
+        data.end = $event.dataset.enddate
+      }
+
+      return data
     }),
   ])
 
@@ -79,11 +84,6 @@ $timelines.forEach(function($timeline) {
         $dateLine.innerText = data.start.toLocaleDateString() + ' - ' + data.end?.toLocaleDateString()
       }
 
-      if (data.active === true) {
-        data.content.className = 'timeline-event active'
-      } else {
-        data.content.className = 'timeline-event'
-      }
       return data.content
     },
   }
