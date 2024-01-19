@@ -5,6 +5,11 @@
   text-overflow: ellipsis;
 }
 
+[data-enddate]:is([data-enddate=""]) {
+  width: 400px;
+  white-space: initial;
+}
+
 .vis-item-overflow.active [data-event-id] {
   background-color: var(--color--canvas);
 }
@@ -40,4 +45,8 @@
 
 .vis-timeline {
   border: none !important;
+}
+
+.vis-panel.vis-center {
+  /*overflow-x: scroll !important;*/
 }

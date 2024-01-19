@@ -17,6 +17,8 @@ const _markerSelector = '.' + _markerClass;
 const $markerMarkup = `<div class="${_markerClass}"></div>`;
 const _activeClass = 'active';
 const _timelineViewportSelector = `[${_timelineIdAttr}]`;
+const _timelineZoomAttr = 'data-timeline-zoom';
+const _yearInMs = 1 * 365 * 24 * 60 * 60 * 1000; // 1 year in miliseconds
 
 /**
   * Set minimum value of a Number
@@ -63,7 +65,7 @@ function prepareVisDataItem($event, idx) {
     active: false
   }
 
-  if (enddate !== undefined) {
+  if (enddate !== undefined && enddate != '') {
     data.end = enddate
   }
 
@@ -91,6 +93,14 @@ $timelines.forEach(function($timeline) {
 
   const data = getVisDataFromEvents($events)
 
+  let zoomFactor = 2; // default: show 2 years
+  if ($timeline.dataset?.timelineZoom !== '') {
+    zoomFactor = parseInt($timeline.dataset.timelineZoom)
+  }
+
+  const { min, max } = getMinMaxDatesFromEvents($events)
+  console.log(min.getTime(), max.getTime())
+
   const options = {
     horizontalScroll: true,
     locale: 'de',
@@ -102,15 +112,17 @@ $timelines.forEach(function($timeline) {
     stackSubgroups: true,
     zoomable: false,
     zoomKey: 'ctrlKey',
-    zoomMin: 315360000000000 / 1000 / 5, // 2 years
-    zoomMax: 315360000000000 / 1000 / 5, // 2 years
+    zoomMin: _yearInMs * zoomFactor,
+    zoomMax: _yearInMs * zoomFactor,
     showCurrentTime: false,
-    align: 'left',
+    //align: 'left',
+    limitSize: false,
+    min: min,
+    max: max,
   }
 
   const timeline = new vis.Timeline($container, data, options);
   visTimelines[$timeline.dataset.timelineId] = timeline
-  //console.log(timeline)
 
   const $background = $timeline.querySelector(_visBackgroundSelector)
   $($background).append($markerMarkup)
@@ -119,9 +131,14 @@ $timelines.forEach(function($timeline) {
   const markerXright = $marker.getBoundingClientRect().right
 
   /**
+   * Bind eventlisteners for items active state
+   */
+  timeline.on('changed', handleActiveStates)
+
+  /**
    * Make sure to add/remove the 'active' class on the overflow container when it touches the $marker
    */
-  function handleActiveStates(event) {
+  function handleActiveStates(_event) {
     const $overflowItems = $timeline.querySelectorAll(_visOverflowSelector)
 
     $overflowItems.forEach(function($item) {
@@ -135,16 +152,8 @@ $timelines.forEach(function($timeline) {
     })
   }
 
-  /**
-   * Bind eventlisteners for items active state
-   */
-  timeline.on('changed', handleActiveStates)
-
   timeline.on('rangechange', handleTimelineSync)
 
-  /**
-   * TODO: Add comments to this file!
-   */
   function handleTimelineSync(event) {
     /**
      * The idea of this pattern was to return a new handler for each timeline that does not run the
@@ -159,7 +168,7 @@ $timelines.forEach(function($timeline) {
         const end = event.end.getTime()
         const median = Math.round((start + end) / 2)
 
-        visTimelines[targetTimelineIds].moveTo(median, {
+        visTimelines[targetTimelineId].moveTo(median, {
           animation: {
             duration: 200,
             easingFunction: 'easeInOutQuad'
@@ -175,3 +184,35 @@ $timelines.forEach(function($timeline) {
   const $track = $timeline.querySelector(_trackSelector)
   $track.style.display = 'none'; // hide original track
 })
+
+function getMinMaxDatesFromEvents($events) {
+
+  let min = new Date();
+  let max = new Date(0);
+
+  $events.forEach(function($event) {
+    const startdate = new Date($event.dataset.startdate)
+    if (startdate < min) {
+      min = startdate
+    }
+
+    if ($event.dataset?.enddate !== '' && $event.dataset?.enddate !== undefined) {
+      const enddate = new Date($event.dataset.enddate)
+
+      if (enddate > max) {
+        max = enddate
+      }
+    } else {
+      if (startdate > max) {
+        max = startdate
+      }
+    }
+  })
+
+
+  min.setFullYear(min.getFullYear() - 1)
+  max.setFullYear(max.getFullYear() + 1)
+
+
+  return { min, max }
+}
