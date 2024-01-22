@@ -15,6 +15,9 @@ const _visBackgroundSelector = '.vis-panel.vis-background';
 const _timelineViewportSelector = `[${_timelineIdAttr}]`;
 const _timelineZoomAttr = 'data-timeline-zoom';
 const _yearInMs = 1 * 365 * 24 * 60 * 60 * 1000; // 1 year in miliseconds
+const _zoomPaddingInYears = 1;
+const _zoomPaddingMobileInYears = 3;
+const _mobileBreakpoint = 780;
 
 /**
   * Set minimum value of a Number
@@ -193,9 +196,15 @@ function getMinMaxDatesFromEvents($events) {
     }
   })
 
+  // time passing for rendered timelines
+  let padding = _zoomPaddingInYears
+  if (window.innerWidth <= _mobileBreakpoint) {
+    padding = _zoomPaddingMobileInYears
+  }
+
   // Add one year of padding before and after first and last event
-  min.setFullYear(min.getFullYear() - 1)
-  max.setFullYear(max.getFullYear() + 1)
+  min.setFullYear(min.getFullYear() - padding)
+  max.setFullYear(max.getFullYear() + padding)
 
   return { min, max }
 }

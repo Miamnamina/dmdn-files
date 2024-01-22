@@ -6,6 +6,7 @@
 
 [data-enddate]:is([data-enddate=""]) {
   width: 400px;
+  max-width: 100vw;
   white-space: initial;
 }
 
