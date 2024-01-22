@@ -24,8 +24,9 @@
   width: 10px;
   height: 100%;
   position: absolute;
-  background-color: rgba(149, 171, 199, 1);
   left: calc(50% - 10px / 2);
+  /*background-color: rgba(149, 171, 199, 1);*/
+  background-color: transparent;
 }
 
 [data-timeline-id] .vis-item {
@@ -45,8 +46,4 @@
 
 .vis-timeline {
   border: none !important;
-}
-
-.vis-panel.vis-center {
-  /*overflow-x: scroll !important;*/
 }

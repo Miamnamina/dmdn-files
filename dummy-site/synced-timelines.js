@@ -42,6 +42,7 @@ Number.prototype.clamp = function(min, max) {
   * Get all timelines that are not synced to nothing, i.e. synced timelines
   */
 const $timelines = document.querySelectorAll(`[${_timelineIdAttr}]`);
+
 /**
   * This will hold all the vis-timeline instances so we can address each of them
   * when we want to scroll the synced timelines.
@@ -99,13 +100,12 @@ $timelines.forEach(function($timeline) {
   }
 
   const { min, max } = getMinMaxDatesFromEvents($events)
-  console.log(min.getTime(), max.getTime())
 
   const options = {
     horizontalScroll: true,
     locale: 'de',
     selectable: false,
-    showMajorLabels: false,
+    showMajorLabels: true,
     showMinorLabels: false,
     showTooltips: false,
     stack: true,
@@ -137,6 +137,8 @@ $timelines.forEach(function($timeline) {
 
   /**
    * Make sure to add/remove the 'active' class on the overflow container when it touches the $marker
+   *
+   * @prop {object} _event
    */
   function handleActiveStates(_event) {
     const $overflowItems = $timeline.querySelectorAll(_visOverflowSelector)
@@ -154,6 +156,14 @@ $timelines.forEach(function($timeline) {
 
   timeline.on('rangechange', handleTimelineSync)
 
+  /**
+   * Handle synching of timelines
+   *
+   * This event handler takes a vis-timeline event, gets the target, computes the median of the
+   * rendered time window and moves all the related timelines to this date.
+   *
+   * @prop {object} event
+   */
   function handleTimelineSync(event) {
     /**
      * The idea of this pattern was to return a new handler for each timeline that does not run the
@@ -168,6 +178,11 @@ $timelines.forEach(function($timeline) {
         const end = event.end.getTime()
         const median = Math.round((start + end) / 2)
 
+        /**
+         * Here we use the moveTo method and not the setWindow method, because the setWindow method
+         * changes the zoom factor of the timeline by defining a start and end date for the rendered
+         * time window. The moveTo method centers the timeline to the given date.
+         */
         visTimelines[targetTimelineId].moveTo(median, {
           animation: {
             duration: 200,
@@ -185,8 +200,12 @@ $timelines.forEach(function($timeline) {
   $track.style.display = 'none'; // hide original track
 })
 
+/**
+  * Get min and max dates from timeline events
+  *
+  * @prop {object} $event - .timeline-event node
+  */
 function getMinMaxDatesFromEvents($events) {
-
   let min = new Date();
   let max = new Date(0);
 
@@ -209,10 +228,9 @@ function getMinMaxDatesFromEvents($events) {
     }
   })
 
-
+  // Add one year of padding before and after first and last event
   min.setFullYear(min.getFullYear() - 1)
   max.setFullYear(max.getFullYear() + 1)
-
 
   return { min, max }
 }
