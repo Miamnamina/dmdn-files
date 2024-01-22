@@ -1,5 +1,4 @@
 [data-event-id] {
-  background-color: rgba(235, 238, 243, 1);
   width: 100%;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -10,23 +9,9 @@
   white-space: initial;
 }
 
-.vis-item-overflow.active [data-event-id] {
-  background-color: var(--color--canvas);
-}
-
 [data-timeline-id] .vis-item .vis-item-content {
   width: 100%;
   padding: 8px;
-}
-
-[data-timeline-id] .marker {
-  display: block;
-  width: 10px;
-  height: 100%;
-  position: absolute;
-  left: calc(50% - 10px / 2);
-  /*background-color: rgba(149, 171, 199, 1);*/
-  background-color: transparent;
 }
 
 [data-timeline-id] .vis-item {
@@ -46,4 +31,12 @@
 
 .vis-timeline {
   border: none !important;
+}
+
+.vis-item.vis-box {
+  text-align: left !important;
+}
+
+.vis-text.vis-minor {
+  /* style minor labels here */
 }

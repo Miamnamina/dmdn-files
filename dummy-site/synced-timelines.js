@@ -12,10 +12,6 @@ const _visTimelineSelector = '.' + _visTimelineClass;
 const $visTimelineContainerMarkup = `<div class="${_visTimelineClass}"></div>`;
 const _visOverflowSelector = '.vis-item-overflow';
 const _visBackgroundSelector = '.vis-panel.vis-background';
-const _markerClass = 'marker'
-const _markerSelector = '.' + _markerClass;
-const $markerMarkup = `<div class="${_markerClass}"></div>`;
-const _activeClass = 'active';
 const _timelineViewportSelector = `[${_timelineIdAttr}]`;
 const _timelineZoomAttr = 'data-timeline-zoom';
 const _yearInMs = 1 * 365 * 24 * 60 * 60 * 1000; // 1 year in miliseconds
@@ -63,7 +59,6 @@ function prepareVisDataItem($event, idx) {
     id: idx,
     start: startdate,
     content: $event,
-    active: false
   }
 
   if (enddate !== undefined && enddate != '') {
@@ -106,7 +101,7 @@ $timelines.forEach(function($timeline) {
     locale: 'de',
     selectable: false,
     showMajorLabels: true,
-    showMinorLabels: false,
+    showMinorLabels: true,
     showTooltips: false,
     stack: true,
     stackSubgroups: true,
@@ -114,8 +109,8 @@ $timelines.forEach(function($timeline) {
     zoomKey: 'ctrlKey',
     zoomMin: _yearInMs * zoomFactor,
     zoomMax: _yearInMs * zoomFactor,
+    groupHeightMode: 'fixed',
     showCurrentTime: false,
-    //align: 'left',
     limitSize: false,
     min: min,
     max: max,
@@ -123,36 +118,6 @@ $timelines.forEach(function($timeline) {
 
   const timeline = new vis.Timeline($container, data, options);
   visTimelines[$timeline.dataset.timelineId] = timeline
-
-  const $background = $timeline.querySelector(_visBackgroundSelector)
-  $($background).append($markerMarkup)
-  const $marker = $timeline.querySelector(_markerSelector)
-  const markerXleft = $marker.getBoundingClientRect().left
-  const markerXright = $marker.getBoundingClientRect().right
-
-  /**
-   * Bind eventlisteners for items active state
-   */
-  timeline.on('changed', handleActiveStates)
-
-  /**
-   * Make sure to add/remove the 'active' class on the overflow container when it touches the $marker
-   *
-   * @prop {object} _event
-   */
-  function handleActiveStates(_event) {
-    const $overflowItems = $timeline.querySelectorAll(_visOverflowSelector)
-
-    $overflowItems.forEach(function($item) {
-      const itemRect = $item.getBoundingClientRect()
-
-      if (itemRect.left < markerXright && itemRect.right > markerXleft) {
-        $($item).addClass(_activeClass)
-      } else {
-        $($item).removeClass(_activeClass)
-      }
-    })
-  }
 
   timeline.on('rangechange', handleTimelineSync)
 
