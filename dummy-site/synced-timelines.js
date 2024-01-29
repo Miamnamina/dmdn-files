@@ -2,7 +2,6 @@
  * Define selectors for simple configuration
  */
 const _timelineIdAttr = 'data-timeline-id';
-const _timelineSyncedWithAttr = 'data-timeline-synced-with';
 const _trackSelector = '[data-timeline-track]';
 const _eventSelector = '[data-event-id]';
 const _eventStartDateAttr = 'data-startdate';
@@ -38,7 +37,7 @@ Number.prototype.clamp = function(min, max) {
 }
 
 /**
-  * Get all timelines that are not synced to nothing, i.e. synced timelines
+  * Get all timelines
   */
 const $timelines = document.querySelectorAll(`[${_timelineIdAttr}]`);
 
@@ -138,20 +137,19 @@ $timelines.forEach(function($timeline) {
      * `timeline.setWindow()` method on the timeline that is currently being actively scrolled.
      */
     const $eventTarget = event.event?.target !== undefined ? event.event.target.closest(_timelineViewportSelector) : undefined
-    const targetTimelineIds = $timeline.dataset.timelineSyncedWith.split(',')
 
-    targetTimelineIds.forEach(function(targetTimelineId) {
-      if ($eventTarget !== undefined && targetTimelineId !== $eventTarget.dataset.timelineId) {
-        const start = event.start.getTime()
-        const end = event.end.getTime()
-        const median = Math.round((start + end) / 2)
+    const start = event.start.getTime()
+    const end = event.end.getTime()
+    const median = Math.round((start + end) / 2)
 
+    Object.keys(visTimelines).forEach(function(key) {
+      if ($eventTarget !== undefined && key !== $eventTarget?.dataset.timelineId) {
         /**
          * Here we use the moveTo method and not the setWindow method, because the setWindow method
          * changes the zoom factor of the timeline by defining a start and end date for the rendered
          * time window. The moveTo method centers the timeline to the given date.
          */
-        visTimelines[targetTimelineId].moveTo(median, {
+        visTimelines[key].moveTo(median, {
           animation: {
             duration: 200,
             easingFunction: 'easeInOutQuad'
