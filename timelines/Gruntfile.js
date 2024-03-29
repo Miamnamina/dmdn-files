@@ -21,7 +21,7 @@ module.exports = function(grunt) {
         livereload: true
       },
       javascript: {
-        files: "./*.js",
+        files: "./synced-timelines.js",
         tasks: ["js"]
       }
     }
