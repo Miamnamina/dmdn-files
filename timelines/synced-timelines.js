@@ -173,7 +173,7 @@ const initTimelines = $timelines => {
              * The idea of this pattern was to return a new handler for each timeline that does not run the
              * `timeline.setWindow()` method on the timeline that is currently being actively scrolled.
              */
-            const $eventTarget = event.event?.target !== undefined ? event.event.target.closest("."+_timelineScrollClass) : undefined
+            const $eventTarget = event.event?.target !== undefined ? event.event.target.closest(`.${_timelineScrollClass}`) : undefined
 
             const start = event.start.getTime()
             const end = event.end.getTime()
