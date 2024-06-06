@@ -33,6 +33,14 @@ Number.prototype.clamp = function (min, max) {
     return Math.min(Math.max(this, min), max)
 }
 
+
+/**
+ * Get today's date
+ */
+function fmtDateString(date) {
+    return date.toISOString().split('T', 1)[0]
+}
+
 /**
  * Wait for a condition function to be true
  *
@@ -77,7 +85,7 @@ const visTimelines = {}
  * @return {object}
  */
 function prepareVisDataItem($event, idx) {
-    const {startdate, enddate} = $event.dataset
+    const {startdate, enddate, stillactive} = $event.dataset
 
     const data = {
         id: idx,
@@ -85,8 +93,11 @@ function prepareVisDataItem($event, idx) {
         content: $event,
     }
 
-    if (enddate !== undefined && enddate != "") {
-        data.end = enddate
+    // check if event is still active
+    if (enddate) {
+        data.end = enddate;
+    } else if (stillactive) {
+        data.end = fmtDateString(new Date());
     }
 
     return data
