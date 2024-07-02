@@ -87,30 +87,12 @@ const visTimelines = {}
 function prepareVisDataItem($event, idx) {
     const {startdate, enddate, stillactive} = $event.dataset
 
-    const data = {
+    return {
         id: idx,
         start: startdate,
+        end: enddate || (stillactive ? fmtDateString(new Date()) : undefined),
         content: $event,
     }
-
-    // check if event is still active
-    if (enddate) {
-        data.end = enddate;
-    } else if (stillactive) {
-        data.end = fmtDateString(new Date());
-    }
-
-    return data
-}
-
-/**
- * Prepare data for vis-timeline as vis.DataSet
- *
- * @props {NodeList} $events - list of .timeline-event nodes
- * @return {vis.DataSet}
- */
-function getVisDataFromEvents($events) {
-    return new vis.DataSet(Array.from($events).map(prepareVisDataItem))
 }
 
 /**
@@ -125,14 +107,15 @@ const initTimelines = $timelines => {
 
         const $container = $timeline.querySelector(_visTimelineSelector)
 
-        const data = getVisDataFromEvents($events)
+        const dataItems = [...$events].map(prepareVisDataItem)
+        const dataSet = new vis.DataSet(dataItems)
 
         let zoomFactor = 2; // default: show 2 years
         if ($timeline.parentElement.dataset?.timelineZoom !== "") {
             zoomFactor = parseInt($timeline.parentElement.dataset.timelineZoom)
         }
 
-        const {min, max} = getMinMaxDatesFromEvents($events)
+        const {min, max} = getMinMaxDatesFromEvents(dataItems)
 
         const options = {
             horizontalScroll: true,
@@ -154,7 +137,7 @@ const initTimelines = $timelines => {
             max: max,
         }
 
-        const timeline = new vis.Timeline($container, data, options);
+        const timeline = new vis.Timeline($container, dataSet, options);
         const timelineId = $timeline.parentElement.querySelector(_timelineViewportSelector).dataset.timelineId
         visTimelines[timelineId] = timeline
 
@@ -209,30 +192,28 @@ const initTimelines = $timelines => {
 /**
  * Get min and max dates from timeline events
  *
- * @prop {object} $event - .timeline-event node
+ * @prop {object[]} dataItems - List of data items with {idx, start, end}
  */
-function getMinMaxDatesFromEvents($events) {
+function getMinMaxDatesFromEvents(dataItems) {
     let min = new Date();
     let max = new Date(0);
 
-    $events.forEach(function ($event) {
-        const startdate = new Date($event.dataset.startdate)
+    for (const dataItem of dataItems) {
+        const startdate = new Date(dataItem.start)
         if (startdate < min) {
             min = startdate
         }
+        if (startdate > max) {
+            max = startdate
+        }
 
-        if ($event.dataset?.enddate !== "" && $event.dataset?.enddate !== undefined) {
-            const enddate = new Date($event.dataset.enddate)
-
+        if (dataItem.end) {
+            const enddate = new Date(dataItem.end)
             if (enddate > max) {
                 max = enddate
             }
-        } else {
-            if (startdate > max) {
-                max = startdate
-            }
         }
-    })
+    }
 
     // time passing for rendered timelines
     let padding = _zoomPaddingInYears
