@@ -4,12 +4,21 @@
   text-overflow: ellipsis;
 }
 
-[data-enddate]:is([data-enddate=""]) {
-  width: 400px;
-  max-width: 100vw;
-  white-space: initial;
+@media screen and (max-width:370px) {
+  .timeline-event.standalone {
+    width: 300px;
+    max-width: 80vw;
+    white-space: initial;
+  }
 }
 
+@media screen and (min-width:371px) {
+ .timeline-event.standalone {
+  width: 400px;
+  max-width: 90vw;
+  white-space: initial;
+}
+}
 [data-timeline-id] .vis-item .vis-item-content {
   width: 100%;
   padding: 8px;
@@ -20,6 +29,8 @@
   background-color: initial;
   border-width: 0;
   color: initial;
+     /* fix sticky first item */
+  transform: translate(-1000px, -1000px);
 }
 
 [data-timeline-id] .vis-content {
