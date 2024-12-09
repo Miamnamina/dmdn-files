@@ -250,8 +250,13 @@ const areTimelinesReadyForInit = () => {
     return false;
 }
 
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 /**
- * Actually poll the DOM and then run the timeline initialization code.
- */
+ * Actually poll the DOM and then run the timeline initialization code.
+ */
 waitFor(areTimelinesReadyForInit)
-    .then(() => initTimelines($timelines))
+    .then(() => delay(500)) // Add a 500ms delay
+    .then(() => initTimelines($timelines))
